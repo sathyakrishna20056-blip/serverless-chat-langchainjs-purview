@@ -46,11 +46,11 @@ export async function invokeProtectionScopeApi(accessToken: string): Promise<{ b
 export async function invokeUserRightsForLables(accessToken: string, context: InvocationContext): Promise<string> {
   try {
     // ── build endpoint ──────────────────────────────────────────────────────────
-    const graphBaseUrl = process.env.GRAPH_BASE_URL?.replace(/\/+$/, '') || 'https://graph.microsoft.com/beta';
+    const graphBaseUrl = process.env.GRAPH_BASE_URL?.replace(/\/+$/, '') || 'https://graph.microsoft.com/v1.0';
 
-    const url = `${graphBaseUrl}/security/dataSecurityAndGovernance/sensitivityLabels?$expand=rights`;
+    const url = `${graphBaseUrl}/security/dataSecurityAndGovernance/sensitivityLabels?$expand=rights,sublabels`;
 
-    context.log(`Calling Graph label endpoint: ${url}`);
+    context.log(`invokeUserRightsForLables: ${url}`);
 
     // ── call Graph ──────────────────────────────────────────────────────────────
     const response = await fetch(url, {
@@ -69,6 +69,81 @@ export async function invokeUserRightsForLables(accessToken: string, context: In
 
     const body = await response.text();
     context.log('Graph label endpoint response:', body);
+    return body; // Return the body as a string
+  } catch (error) {
+    context.error('Error retrieving label info:', error);
+    throw error;
+  }
+}
+
+export async function invokeUserRightsForSubLables(
+  accessToken: string,
+  labelId: string,
+  context: InvocationContext,
+): Promise<string> {
+  try {
+    // ── build endpoint ──────────────────────────────────────────────────────────
+    const graphBaseUrl = process.env.GRAPH_BASE_URL?.replace(/\/+$/, '') || 'https://graph.microsoft.com/v1.0';
+
+    const url = `${graphBaseUrl}/security/dataSecurityAndGovernance/sensitivityLabels/${labelId}/rights`;
+
+    context.log(`invokeUserRightsForSubLables: ${url}`);
+
+    // ── call Graph ──────────────────────────────────────────────────────────────
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json',
+        'User-Agent': 'Purview-API-Sample',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`LabelInfo call failed - ${response.status}: ${errorText}`);
+    }
+
+    const body = await response.text();
+    context.log('Graph label endpoint response:', body);
+    return body; // Return the body as a string
+  } catch (error) {
+    context.error('Error retrieving label info:', error);
+    throw error;
+  }
+}
+
+export async function invokeLabelInheritance(
+  accessToken: string,
+  labelids: string[],
+  context: InvocationContext,
+): Promise<string> {
+  try {
+    // ── build endpoint ──────────────────────────────────────────────────────────
+    const graphBaseUrl = process.env.GRAPH_BASE_URL?.replace(/\/+$/, '') || 'https://graph.microsoft.com/v1.0';
+
+    const idsSegment = labelids.map((id) => `"${id}"`).join(',');
+    const url = `${graphBaseUrl}/security/dataSecurityAndGovernance/sensitivityLabels/computeInheritance(labelIds=[${idsSegment}],locale='en-US',contentFormats=["File"])`;
+
+    context.log(`invokeLabelInheritance: ${url}`);
+
+    // ── call Graph ──────────────────────────────────────────────────────────────
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json',
+        'User-Agent': 'Purview-API-Sample',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`LabelInfo call failed - ${response.status}: ${errorText}`);
+    }
+
+    const body = await response.text();
+    context.log('invokeUserRightsForLables response:', body);
     return body; // Return the body as a string
   } catch (error) {
     context.error('Error retrieving label info:', error);

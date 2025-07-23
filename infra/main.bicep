@@ -16,7 +16,7 @@ param azureAdAuthorityHost string= 'https://login.microsoftonline.com/organizati
 param azureAdGraphScope string = 'Content.Process.User ProtectionScopes.Compute.User ContentActivity.Write SensitivityLabel.Read'
 
 @description('Base URL for Purview API')
-param purviewBaseUrl string = 'https://graph.microsoft.com/beta/'
+param purviewBaseUrl string = 'https://graph.microsoft.com/v1.0/'
 
 @secure()
 @description('Secret created for the backend application')
